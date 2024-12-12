@@ -75,6 +75,26 @@ def get_prizes_by_year(year: int):
     else:
         print(f"Error {response.status_code}: {response.text}")
 
+def get_prizes_by_category(category: str):
+    """
+    Consulta los premios Nobel por categoría desde el servidor.
+    """
+    response = requests.get(f"{ip_address}/prizes/category/{category}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Prizes for the category '{data['category']}':\n")
+        for prize in data["prizes"]:
+            print(f"Year: {prize['year']}")
+            print("Laureates:")
+            for laureate in prize["laureates"]:
+                name = laureate.get("firstname", "") + " " + laureate.get("surname", "")
+                print(f"  - {name.strip()} ({laureate['motivation']})")
+            print()
+    elif response.status_code == 404:
+        print(response.json()["detail"])
+    else:
+        print(f"Error {response.status_code}: {response.text}")
+
 # Funciones para procesar las opciones
 def create(a):
     # url = "https://api.nobelprize.org/v1/prize.json"
@@ -123,7 +143,8 @@ def read(a):
         print("1. Consultar todos los Galardonado")
         print("2. Consultar un Galardonado por ID")
         print("3. Consultar un Galardonado por Nombre")
-        print("4. Consultar Premio")
+        print("4. Consultar Premio por Año")
+        print("5. Consultar Premio por Categoria")
         # print("3. Volver atras")
 
         seleccion = int(input("Elige una opcion: "))
@@ -140,6 +161,30 @@ def read(a):
         elif seleccion == 4:
             year = int(input("Ingrese el anio: "))
             get_prizes_by_year(year)
+        elif seleccion == 5:
+            print("Categorias:")
+            print("1.chemistry")
+            print("2.economics")
+            print("3.literature")
+            print("4.peace")
+            print("5.physics")
+            print("6.medicine")
+            categoria = int(input("Inserte categoria: "))
+
+            if categoria == 1:
+                categoria = "chemistry"
+            elif categoria == 2:
+                categoria = "economics"
+            elif categoria == 3:
+                categoria = "literature"
+            elif categoria == 4:
+                categoria = "peace"
+            elif categoria == 5:
+                categoria = "physics"
+            elif categoria == 6:
+                categoria = "medicine"
+            get_prizes_by_category(categoria)
+
 
 
 

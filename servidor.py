@@ -65,6 +65,37 @@ def get_prizes_by_year(year: int):
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Error decoding prizes.json")
 
+@app.get("/prizes/category/{category}")
+def get_prizes_by_category(category: str):
+    """
+    Devuelve los premios Nobel de una categoría específica.
+    """
+    try:
+        # Carga el archivo prizes.json
+        with open("prizes.json", "r") as archivo:
+            prizes = json.load(archivo)  # Convertir a diccionario
+
+            # Filtrar premios por la categoría
+            prizes_by_category = [
+                {
+                    "year": prize["year"],
+                    "laureates": prize.get("laureates", [])  # Obtener 'laureates' o una lista vacía si no existe
+                }
+                for prize_id, prize in prizes.items()
+                if prize.get("category", "").lower() == category.lower()  # Comparar ignorando mayúsculas/minúsculas
+            ]
+
+            if prizes_by_category:
+                return {"category": category, "prizes": prizes_by_category}
+            else:
+                raise HTTPException(status_code=404, detail=f"No prizes found for category '{category}'")
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="File prizes.json not found")
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Error decoding prizes.json")
+
 @app.get("/laureates")
 def get_all_laureates():
     with open('laureates.json', 'r') as archivo:
