@@ -1,6 +1,7 @@
-from fastapi import FastAPI, HTTPException
-# import requests
+from fastapi import FastAPI, HTTPException, Request
+import requests
 import json
+import os
 
 app = FastAPI()
 
@@ -156,12 +157,6 @@ def get_laureate_by_id(id: int):
         raise HTTPException(status_code=500, detail="Error decoding laureates.json")
 
 
-# //////////////   POST   //////////////
-@app.post("/laureates")
-def create_laureates(laureate):
-    laureates.append(laureate)
-    return laureates
-
 @app.get("/laureates/{id}")
 def get_laureate(id: int):
     try:
@@ -210,6 +205,58 @@ def search_laureates(firstname: str = None, surname: str = None):
 @app.get("/testconeccion/")
 def testconect():
     return {"200"}
+
+# //////////////   POST   //////////////
+@app.post("/laureates")
+async def add_laureate(request: Request):
+    """
+    Agrega un nuevo laureado al archivo laureates.json con un ID auto incremental.
+    """
+    try:
+        # Obtén los datos del cuerpo de la solicitud
+        laureate_data = await request.json()
+
+        # Validar campos requeridos excepto ID (será generado automáticamente)
+        required_fields = {"firstname", "motivation", "share"}
+        if not required_fields.issubset(laureate_data.keys()):
+            raise HTTPException(status_code=400, detail="Missing required fields.")
+
+        if not isinstance(laureate_data["share"], int):
+            raise HTTPException(status_code=400, detail="'share' must be an integer.")
+        if not isinstance(laureate_data["firstname"], str):
+            raise HTTPException(status_code=400, detail="'firstname' must be a string.")
+
+        # Verifica si el archivo existe
+        if not os.path.exists("laureates.json"):
+            raise HTTPException(status_code=500, detail="File laureates.json not found")
+
+        # Carga el archivo laureates.json
+        with open("laureates.json", "r") as archivo:
+            laureates = json.load(archivo)
+
+        # Determina el próximo ID disponible (auto incremental)
+        next_id = max(map(int, laureates.keys())) + 1 if laureates else 1
+
+        # Agregar el nuevo laureado con el ID generado
+        laureates[str(next_id)] = {
+            "id": str(next_id),
+            "firstname": laureate_data["firstname"],
+            "surname": laureate_data.get("surname", None),  # Campo opcional
+            "motivation": laureate_data["motivation"],
+            "share": str(laureate_data["share"])
+        }
+
+        # Guardar los cambios en el archivo
+        with open("laureates.json", "w") as archivo:
+            json.dump(laureates, archivo, indent=4)
+
+        return {"message": f"Laureate with ID {next_id} added successfully."}
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="File laureates.json not found")
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Error decoding laureates.json")
 
 
 

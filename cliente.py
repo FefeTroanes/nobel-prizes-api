@@ -16,7 +16,6 @@ def print_response(response):
     else:
         print("Response is not a valid dictionary")
 
-
 def get_all_laureates(api_url: str):
     response = requests.get(f"{api_url}/laureates")
     if response.status_code == 200:
@@ -95,6 +94,37 @@ def get_prizes_by_category(category: str):
     else:
         print(f"Error {response.status_code}: {response.text}")
 
+def create_laureate():
+    # Solicitar los datos del laureado
+    firstname = input("Ingrese el nombre del laureado: ")
+    surname = input("Ingrese el apellido del laureado: ")
+    motivation = input("Ingrese la motivación del laureado: ")
+    while True:
+        try:
+            share = int(input("Ingrese el share (debe ser un número): "))
+            break
+        except ValueError:
+            print("El valor de 'share' debe ser un número entero.")
+
+    # Crear un diccionario con los datos
+    laureate_data = {
+        "firstname": firstname,
+        "surname": surname,
+        "motivation": motivation,
+        "share": share
+    }
+
+    # Realizar la solicitud POST al servidor
+    url = "http://localhost:8000/laureates"
+    response = requests.post(url, json=laureate_data)
+
+    # Verificar la respuesta del servidor
+    if response.status_code == 200:
+        print(f"Laureado agregado exitosamente: {response.json()['message']}")
+    else:
+        print(f"Error al agregar el laureado: {response.json()['detail']}")
+
+
 # Funciones para procesar las opciones
 def create(a):
     # url = "https://api.nobelprize.org/v1/prize.json"
@@ -119,11 +149,11 @@ def create(a):
 
         seleccion = int(input("Elige una opcion: "))
 
-        if seleccion == "1":
-            create_laurete(dir)
-        elif seleccion == "2":
+        if seleccion == 1:
+            create_laureate()
+        elif seleccion == 2:
             create_prize(dir)
-        elif seleccion == "2":
+        elif seleccion == 3:
             mostrar_menu()
 
 def read(a):
