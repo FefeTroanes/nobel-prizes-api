@@ -8,11 +8,11 @@ def print_response(response):
     if isinstance(response, dict):
         for key, value in response.items():
             if isinstance(value, dict):  # Si el valor es otro diccionario
-                # print(f"{key}:")
+                print(f"{key}:")
                 for sub_key, sub_value in value.items():
                     print(f"  {sub_key}: {sub_value}")
-            # else:
-            #     print(f"{key}: {value}")
+            else:
+                print(f"{key}: {value}")
     else:
         print("Response is not a valid dictionary")
 
@@ -30,7 +30,7 @@ def get_laureate_by_id(laureate_id: int):
     response = requests.get(f"{ip_address}/laureates/{laureate_id}")
     if response.status_code == 200:
         # return print(response.json())  # Devuelve los datos del laureado
-        return print_response(response.json())
+        return print_response(response.json()["details"])
     elif response.status_code == 404:
         # response_data = response.json()
         print(response.json()["detail"])
@@ -47,11 +47,33 @@ def search_laureates_by_name(firstname: str = None, surname: str = None):
 
     response = requests.get(f"{ip_address}/laureates/search", params=params)
     if response.status_code == 200:
-        return print(response.json())  # Devuelve la lista de laureados que coinciden
+        # return print(response.json()["results"])  # Devuelve la lista de laureados que coinciden
+        return print_response(response.json())
     elif response.status_code == 404:
-        return print("No laureates found with the given criteria")
+        # return print("No laureates found with the given criteria")
+        print(response.json()["detail"])
     else:
         raise Exception(f"Error {response.status_code}: {response.text}")
+
+def get_prizes_by_year(year: int):
+    """
+    Consulta los premios Nobel por año desde el servidor.
+    """
+    response = requests.get(f"{ip_address}/prizes/{year}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Prizes for the year {data['year']}:\n")
+        for prize in data["prizes"]:
+            print(f"Category: {prize['category']}")
+            print("Laureates:")
+            for laureate in prize["laureates"]:
+                name = laureate.get("firstname", "") + " " + laureate.get("surname", "")
+                print(f"  - {name.strip()} ({laureate['motivation']})")
+            print()
+    elif response.status_code == 404:
+        print(response.json()["detail"])
+    else:
+        print(f"Error {response.status_code}: {response.text}")
 
 # Funciones para procesar las opciones
 def create(a):
@@ -115,6 +137,9 @@ def read(a):
             firstname = input("Ingrese el nombre: ")
             surname = input("Ingrese el apellido: ")
             search_laureates_by_name(firstname, surname)
+        elif seleccion == 4:
+            year = int(input("Ingrese el anio: "))
+            get_prizes_by_year(year)
 
 
 

@@ -34,6 +34,37 @@ def get_all_prizes():
         content = archivo.read()
         return {content}
 
+@app.get("/prizes/{year}")
+def get_prizes_by_year(year: int):
+    """
+    Devuelve los premios Nobel correspondientes a un año específico.
+    """
+    try:
+        # Carga el archivo prizes.json
+        with open("prizes.json", "r") as archivo:
+            prizes = json.load(archivo)  # Convertir a diccionario
+
+            # Filtrar premios por el año
+            prizes_by_year = [
+                {
+                    "category": prize["category"],
+                    "laureates": prize["laureates"]
+                }
+                for prize_id, prize in prizes.items()
+                if prize.get("year") == str(year)  # Comparar el año como cadena
+            ]
+
+            if prizes_by_year:
+                return {"year": year, "prizes": prizes_by_year}
+            else:
+                raise HTTPException(status_code=404, detail=f"No prizes found for year {year}")
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="File prizes.json not found")
+
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Error decoding prizes.json")
+
 @app.get("/laureates")
 def get_all_laureates():
     with open('laureates.json', 'r') as archivo:
