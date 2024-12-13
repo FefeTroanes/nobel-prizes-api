@@ -258,6 +258,48 @@ async def add_laureate(request: Request):
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Error decoding laureates.json")
 
+@app.post("/prizes")
+def create_prize(prize: dict):
+    try:
+        # Leer el archivo prizes.json
+        with open("prizes.json", "r") as f:
+            prizes = json.load(f)
+
+        # Generar un nuevo ID para el premio
+        new_id = str(max(int(k) for k in prizes.keys()) + 1)
+
+        # Validar que los datos del premio sean correctos
+        if "year" not in prize or "category" not in prize:
+            raise HTTPException(status_code=400, detail="El premio debe tener 'year' y 'category'.")
+
+        # Validar y preparar la lista de laureados
+        laureates = prize.get("laureates", [])
+        if laureates:
+            for laureate in laureates:
+                if "firstname" not in laureate or "surname" not in laureate or "motivation" not in laureate or "share" not in laureate:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Cada laureado debe tener 'firstname', 'surname', 'motivation' y 'share'."
+                    )
+
+        # Crear el nuevo premio
+        new_prize = {
+            "year": prize["year"],
+            "category": prize["category"],
+            "laureates": laureates
+        }
+
+        # Agregar el premio al archivo
+        prizes[new_id] = new_prize
+        with open("prizes.json", "w") as f:
+            json.dump(prizes, f, indent=4)
+
+        return {"message": f"Premio con ID {new_id} creado exitosamente."}
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="No se encontró el archivo prizes.json.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 

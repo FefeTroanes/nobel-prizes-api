@@ -124,6 +124,56 @@ def create_laureate():
     else:
         print(f"Error al agregar el laureado: {response.json()['detail']}")
 
+def create_prize():
+    # Solicitar los datos del premio
+    year = input("Ingrese el año del premio: ")
+    category = input("Ingrese la categoría del premio: ")
+
+    # Confirmar si desea agregar laureados
+    # add_laureates = input("¿Desea agregar laureados a este premio? (sí/no): ").strip().lower()
+
+    # laureates = []
+    # if add_laureates == "sí" or "si" or "SI" or "s" or "S":
+    #     while True:
+    #         print("\nIngrese los datos del laureado:")
+    #         firstname = input("Nombre: ")
+    #         surname = input("Apellido: ")
+    #         motivation = input("Motivación: ")
+    #         share = input("Share: ")
+
+    #         try:
+    #             share = int(share)
+    #         except ValueError:
+    #             print("El 'share' debe ser un número entero.")
+    #             continue
+
+    #         laureates.append({
+    #             "firstname": firstname,
+    #             "surname": surname,
+    #             "motivation": motivation,
+    #             "share": share
+    #         })
+
+    #         another = input("¿Desea agregar otro laureado? (sí/no): ").strip().lower()
+    #         if another != "sí":
+    #             break
+
+    # Crear el diccionario con los datos del premio
+    prize_data = {
+        "year": year,
+        "category": category,
+        # "laureates": laureates
+    }
+
+    # Realizar la solicitud POST al servidor
+    url = "http://localhost:8000/prizes"
+    response = requests.post(url, json=prize_data)
+
+    # Verificar la respuesta del servidor
+    if response.status_code == 200:
+        print(f"Premio creado exitosamente: {response.json()['message']}")
+    else:
+        print(f"Error al crear el premio: {response.json()['detail']}")
 
 # Funciones para procesar las opciones
 def create(a):
@@ -152,7 +202,7 @@ def create(a):
         if seleccion == 1:
             create_laureate()
         elif seleccion == 2:
-            create_prize(dir)
+            create_prize()
         elif seleccion == 3:
             mostrar_menu()
 
