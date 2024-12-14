@@ -31,9 +31,10 @@ async def root():
 @app.get("/prizes")
 def get_all_prizes():
     with open('prizes.json', 'r') as archivo:
-    # Lee el contenido del archivo
-        content = archivo.read()
-        return {content}
+    # Lee el contenido del archivo como JSON
+        data = json.load(archivo)
+    # Retorna el contenido como un diccionario de Python (FastAPI lo serializa a JSON automáticamente)
+    return data
 
 @app.get("/prizes/{year}")
 def get_prizes_by_year(year: int):
@@ -301,7 +302,31 @@ def create_prize(prize: dict):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# //////////////   DELETE   //////////////
+@app.delete("/prizes/{prize_id}")
+def delete_prize(prize_id: str):
+    try:
+        # Leer el archivo prizes.json
+        with open("prizes.json", "r") as f:
+            prizes = json.load(f)
 
+        # Verificar si el premio existe
+        if prize_id not in prizes:
+            raise HTTPException(status_code=404, detail=f"No se encontró el premio con ID {prize_id}.")
+
+        # Eliminar el premio
+        del prizes[prize_id]
+
+        # Guardar los cambios en el archivo
+        with open("prizes.json", "w") as f:
+            json.dump(prizes, f, indent=4)
+
+        return {"message": f"Premio con ID {prize_id} eliminado exitosamente."}
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="No se encontró el archivo prizes.json.")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # @app.get("/items/{item_id}")
 # def read_item(item_id: int):

@@ -265,6 +265,60 @@ def read(a):
                 categoria = "medicine"
             get_prizes_by_category(categoria)
 
+def delete_prize():
+    # Obtener la lista de premios disponibles
+    url = f"{ip_address}/prizes"
+    # Solicitar el ID del premio a eliminar
+    prize_id = input("Ingrese el ID del premio que desea eliminar: ").strip()
+
+    # Validar si el ID existe en el servidor
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        print(f"Error al obtener los premios: {response.json().get('detail', 'Error desconocido')}")
+        return
+
+    prizes = response.json()
+    # print(prizes)
+
+    # for prize_key in prizes:
+    #     print(prize_key)
+
+    # Verificar si el ID ingresado está en los premios
+    if prize_id not in prizes:
+        print("Error: el ID ingresado no corresponde a un premio existente.")
+        return
+
+    # Mostrar información del premio para confirmación
+    prize = prizes[prize_id]
+    print(f"Detalles del premio a eliminar:")
+    print(f"  ID: {prize_id}")
+    print(f"  Año: {prize['year']}")
+    print(f"  Categoría: {prize['category']}")
+    if "laureates" in prize and isinstance(prize["laureates"], list):
+        print("  Laureados:")
+        for laureate in prize["laureates"]:
+            print(f"    - {laureate['firstname']} {laureate.get('surname', '')} (ID: {laureate['id']})")
+    else:
+        print("  Sin laureados asociados.")
+
+    # Confirmación del usuario
+    confirmation = input("¿Está seguro que desea eliminar este premio? (sí/no): ").strip().lower()
+    if confirmation not in ["sí", "si"]:
+        print("Eliminación cancelada.")
+        return
+
+    # Enviar solicitud DELETE
+    delete_url = f"{url}/{prize_id}"
+    delete_response = requests.delete(delete_url)
+
+    # Manejo de la respuesta
+    if delete_response.status_code == 200:
+        print(f'{delete_response.json().get('message', 'Eliminado')}')
+    elif delete_response.status_code == 404:
+        print(f"Error: {delete_response.json().get('detail', 'Premio no encontrado')}")
+    else:
+        print(f"Error inesperado: {delete_response.json().get('detail', 'Error desconocido')}")
 
 
 
@@ -282,6 +336,17 @@ def opcion_3(a):
             print("Error al hacer la solicitud a la opción 3:", response.status_code)
     except requests.exceptions.RequestException as e:
         print(f"Error de conexión: {e}")
+
+def menu_borrar():
+    print("1. Eliminar Premio")
+    print("2. Eliminar Laureado")
+
+    seleccion = int(input("Elige una opcion: "))
+
+    if seleccion == 1:
+        delete_prize()
+    # elif seleccion == 2:
+    #     delete_laureate()
 
 # Función para mostrar el menú y manejar la selección
 def mostrar_menu(dir):
@@ -302,7 +367,7 @@ def mostrar_menu(dir):
         elif seleccion == "3":
             opcion_3(dir)
         elif seleccion == "4":
-            print("Saliendo del programa...")
+            menu_borrar()
             # break  # Salir del bucle y terminar el programa
         else:
             print("Opción no válida. Intenta de nuevo.")
