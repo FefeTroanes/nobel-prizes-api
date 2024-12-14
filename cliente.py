@@ -14,7 +14,7 @@ class Prize(BaseModel):
     category: str | None = None
     year: str | None = None
 
-ip_address = "http://127.0.0.1:8000"
+ip_address = ""
 
 def print_response(response):
     if isinstance(response, dict):
@@ -469,11 +469,10 @@ def mostrar_menu(dir):
 
 
 # arranca?
-def checkip(ip_address: str):
-    # print("ingrese la ip del equipo servidor")
-    # ip_address = input()
-    # ip_address = "http://" + str(ip_address)+ ":8000/testconeccion/"
-    # ip_address = "http://127.0.0.1:8000/testconeccion/"
+def checkip():
+    print("ingrese la ip del equipo servidor")
+    ip_address = input()
+    ip_address = "http://" + str(ip_address)+ ":8000"
     try:
         # response = requests.get(ip_address)
         response = requests.get(f"{ip_address}/testconeccion")
@@ -491,4 +490,4 @@ def checkip(ip_address: str):
 
 # Iniciar el menú
 if __name__ == "__main__":
-    checkip(ip_address)
+    checkip()
