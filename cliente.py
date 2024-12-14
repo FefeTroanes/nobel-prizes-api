@@ -46,8 +46,16 @@ def search_laureates_by_name(firstname: str = None, surname: str = None):
 
     response = requests.get(f"{ip_address}/laureates/search", params=params)
     if response.status_code == 200:
+        data = response.json()
+        # print(data['results'])
+        for result in data['results']:
+            print(f'ID: {result['details']['id']}')
+            print(f'Nombre: {result['details']['firstname']} {result['details']['surname']}')
+            print(f'Motivacion: {result['details']['motivation']}')
+            print(f'Shares: {result['details']['share']}')
+            print(' ')
         # return print(response.json()["results"])  # Devuelve la lista de laureados que coinciden
-        return print_response(response.json())
+        # return print_response(response.json())
     elif response.status_code == 404:
         # return print("No laureates found with the given criteria")
         print(response.json()["detail"])
@@ -320,22 +328,92 @@ def delete_prize():
     else:
         print(f"Error inesperado: {delete_response.json().get('detail', 'Error desconocido')}")
 
+import requests
 
+def update_laureate():
+    # Solicitar al usuario cómo buscar el laureado
+    print("¿Cómo quieres buscar al laureado?")
+    print("1. Por ID")
+    print("2. Por Nombre (y/o Apellido opcional)")
+    opcion = input("Selecciona una opción (1 o 2): ").strip()
 
-def opcion_3(a):
-    url = "https://api.nobelprize.org/v1/prize.json"
+    laureate_id = None
+    if opcion == "1":
+        # Buscar por ID
+        laureate_id = input("Introduce el ID del laureado: ").strip()
+    elif opcion == "2":
+        # Buscar por Nombre y/o Apellido
+        firstname = input("Introduce el Nombre (dejar vacío si no aplica): ").strip()
+        surname = input("Introduce el Apellido (dejar vacío si no aplica): ").strip()
 
-    try:
-        response = requests.get(url)
+        # Realizar la búsqueda en el servidor
+        search_url = f"{ip_address}/laureates/search"
+        params = {"firstname": firstname, "surname": surname}
+        response = requests.get(search_url, params=params)
+
         if response.status_code == 200:
-            #escribir ok aca
-
-
-            print("200")
+            results = response.json()["results"]
+            if len(results) == 1:
+                laureate_id = results[0]["id"]  # Obtener el ID del único resultado
+            elif len(results) > 1:
+                print("Se encontraron múltiples laureados:")
+                for laureate in results:
+                    print(f"ID: {laureate['id']}, Nombre: {laureate['details']['firstname']}, Apellido: {laureate['details'].get('surname', 'N/A')}")
+                laureate_id = input("Introduce el ID del laureado que deseas actualizar: ").strip()
+            else:
+                print("No se encontraron laureados con ese nombre/apellido.")
+                return
         else:
-            print("Error al hacer la solicitud a la opción 3:", response.status_code)
-    except requests.exceptions.RequestException as e:
-        print(f"Error de conexión: {e}")
+            print(f"Error al buscar laureados: {response.status_code}, {response.json()['detail']}")
+            return
+    else:
+        print("Opción no válida. Intenta de nuevo.")
+        return
+
+    # Solicitar los datos a actualizar
+    print("Introduce los nuevos datos del laureado (deja en blanco para no modificar):")
+    firstname = input("Nuevo Nombre: ").strip() or None
+    surname = input("Nuevo Apellido: ").strip() or None
+    motivation = input("Nueva Motivación: ").strip() or None
+    share = input("Nuevo Share: ").strip() or None
+
+    # Realizar la solicitud PUT al servidor
+    update_url = f"{ip_address}/laureates/{laureate_id}"
+    data = {
+        "firstname": firstname,
+        "surname": surname,
+        "motivation": motivation,
+        "share": share
+    }
+    # Filtrar los valores None para no enviar campos vacíos
+    data = {key: value for key, value in data.items() if value is not None}
+
+    # Imprime los datos para depuración
+    print("URL de actualización:", update_url)
+    print("Datos enviados al servidor:", data)
+
+    # Realizar la solicitud PUT con encabezados correctos
+    response = requests.put(update_url, json=data, headers={"Content-Type": "application/json"})
+
+    if response.status_code == 200:
+        print("Laureado actualizado exitosamente:", response.json())
+    else:
+        print(f"Error al actualizar el laureado: {response.status_code}, {response.json().get('detail', 'Error desconocido')}")
+
+
+def update(a):
+    print("1. Editar Laureado")
+    print("2. Editar Premio")
+    print("5. Exit")
+
+    seleccion = int(input("Elige una opción: "))
+
+    if seleccion == 1:
+        update_laureate()
+    elif seleccion == 2:
+        read(dir)
+    else:
+        print("Opción no válida. Intenta de nuevo.")
 
 def menu_borrar():
     print("1. Eliminar Premio")
@@ -365,7 +443,7 @@ def mostrar_menu(dir):
         elif seleccion == "2":
             read(dir)
         elif seleccion == "3":
-            opcion_3(dir)
+            update(dir)
         elif seleccion == "4":
             menu_borrar()
             # break  # Salir del bucle y terminar el programa

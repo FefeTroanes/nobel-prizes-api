@@ -102,8 +102,8 @@ def get_prizes_by_category(category: str):
 def get_all_laureates():
     with open('laureates.json', 'r') as archivo:
     # Lee el contenido del archivo
-        content = archivo.read()
-        return {content}
+        data = json.load(archivo)
+        return data
 
 @app.get("/laureates/search")
 def search_laureates_by_name(firstname: str = None, surname: str = None):
@@ -158,25 +158,25 @@ def get_laureate_by_id(id: int):
         raise HTTPException(status_code=500, detail="Error decoding laureates.json")
 
 
-@app.get("/laureates/{id}")
-def get_laureate(id: int):
-    try:
-        with open('laureates.json', 'r') as archivo:
-            # Carga el contenido del archivo como un diccionario
-            laureates = json.load(archivo)
-            # Busca el laureado por el ID proporcionado
-            laureate = laureates.get(str(id))  # Convierte `id` a string porque los IDs en JSON son cadenas
-            if laureate:
-                return {"id": id, "details": laureate}
-            else:
-                # Lanza una excepción HTTP con un código 404 si no se encuentra el laureado
-                raise HTTPException(status_code=404, detail=f"Laureate with id {id} not found")
-    except FileNotFoundError:
-        # Excepción HTTP 500 si el archivo no existe
-        raise HTTPException(status_code=500, detail="File laureates.json not found")
-    except json.JSONDecodeError:
-        # Excepción HTTP 500 si hay un error al decodificar el archivo JSON
-        raise HTTPException(status_code=500, detail="Error decoding laureates.json")
+# @app.get("/laureates/{id}")
+# def get_laureate(id: int):
+#     try:
+#         with open('laureates.json', 'r') as archivo:
+#             # Carga el contenido del archivo como un diccionario
+#             laureates = json.load(archivo)
+#             # Busca el laureado por el ID proporcionado
+#             laureate = laureates.get(str(id))  # Convierte `id` a string porque los IDs en JSON son cadenas
+#             if laureate:
+#                 return {"id": id, "details": laureate}
+#             else:
+#                 # Lanza una excepción HTTP con un código 404 si no se encuentra el laureado
+#                 raise HTTPException(status_code=404, detail=f"Laureate with id {id} not found")
+#     except FileNotFoundError:
+#         # Excepción HTTP 500 si el archivo no existe
+#         raise HTTPException(status_code=500, detail="File laureates.json not found")
+#     except json.JSONDecodeError:
+#         # Excepción HTTP 500 si hay un error al decodificar el archivo JSON
+#         raise HTTPException(status_code=500, detail="Error decoding laureates.json")
 
 @app.get("/laureates/search")
 def search_laureates(firstname: str = None, surname: str = None):
@@ -327,6 +327,61 @@ def delete_prize(prize_id: str):
         raise HTTPException(status_code=500, detail="No se encontró el archivo prizes.json.")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# //////////////   UPDATE   //////////////
+@app.put("/laureates/{id}")
+def update_laureate(
+    id: int,
+    firstname: str = None,
+    surname: str = None,
+    motivation: str = None,
+    share: str = None,
+):
+    print(f"Datos recibidos: {locals()}")
+    """
+    Actualiza un laureado en el archivo laureates.json según su ID.
+    """
+    try:
+        # Abrir el archivo laureates.json
+        with open("laureates.json", "r") as archivo:
+            laureates = json.load(archivo)  # Cargar los laureados como diccionario
+
+        # Verificar si el laureado existe
+        laureate = laureates.get(str(id))
+        if not laureate:
+            raise HTTPException(status_code=404, detail=f"Laureate with ID {id} not found")
+
+        # Actualizar los datos del laureado
+        if firstname is not None:
+            laureate["firstname"] = firstname
+        if surname is not None:
+            laureate["surname"] = surname
+        if motivation is not None:
+            laureate["motivation"] = motivation
+        if share is not None:
+            laureate["share"] = share
+
+        # Guardar los cambios en el archivo
+        laureates[str(id)] = laureate
+
+        # Verificar si se puede escribir en el archivo
+        try:
+            with open("laureates.json", "w") as archivo:
+                json.dump(laureates, archivo, indent=4)
+            print("Archivo actualizado correctamente.")  # Confirmar en la consola
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error al guardar el archivo: {e}")
+
+        return {"message": f"Laureate with ID {id} updated successfully", "updated_details": laureate}
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=500, detail="File laureates.json not found")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Error decoding laureates.json")
+
+
+
 
 # @app.get("/items/{item_id}")
 # def read_item(item_id: int):
