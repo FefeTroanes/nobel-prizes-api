@@ -338,10 +338,10 @@ def update_laureate(
     motivation: str = None,
     share: str = None,
 ):
-    print(f"Datos recibidos: {locals()}")
     """
     Actualiza un laureado en el archivo laureates.json según su ID.
     """
+    print(f"Datos recibidos: {locals()}")
     try:
         # Abrir el archivo laureates.json
         with open("laureates.json", "r") as archivo:

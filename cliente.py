@@ -1,6 +1,14 @@
 from fastapi import FastAPI
 import requests
 import json
+from pydantic import BaseModel
+
+class Laureate(BaseModel):
+    id: int
+    firstname: str | None = None
+    surname: str | None = None
+    motivation: str | None = None
+    share: str | None = None
 
 ip_address = "http://127.0.0.1:8000"
 
@@ -331,75 +339,48 @@ def delete_prize():
 import requests
 
 def update_laureate():
-    # Solicitar al usuario cómo buscar el laureado
-    print("¿Cómo quieres buscar al laureado?")
-    print("1. Por ID")
-    print("2. Por Nombre (y/o Apellido opcional)")
-    opcion = input("Selecciona una opción (1 o 2): ").strip()
+    try:
+        laureate_id = input("Ingrese el ID del laureado que desea actualizar: ")
+        print("Ingrese los nuevos datos del laureado (deje vacío para no modificar):")
+        firstname = input("Nuevo nombre (firstname): ") or None
+        surname = input("Nuevo apellido (surname): ") or None
+        motivation = input("Nueva motivación (motivation): ") or None
+        share = input("Nuevo share (share): ") or None
 
-    laureate_id = None
-    if opcion == "1":
-        # Buscar por ID
-        laureate_id = input("Introduce el ID del laureado: ").strip()
-    elif opcion == "2":
-        # Buscar por Nombre y/o Apellido
-        firstname = input("Introduce el Nombre (dejar vacío si no aplica): ").strip()
-        surname = input("Introduce el Apellido (dejar vacío si no aplica): ").strip()
+        data = Laureate(
+            id = laureate_id,
+            firstname = firstname,
+            surname = surname,
+            motivation = motivation,
+            share = share
+        )
+        # if firstname:
+        #     data["firstname"] = firstname
+        # if surname:
+        #     data["surname"] = surname
+        # if motivation:
+        #     data["motivation"] = motivation
+        # if share:
+        #     data["share"] = share
 
-        # Realizar la búsqueda en el servidor
-        search_url = f"{ip_address}/laureates/search"
-        params = {"firstname": firstname, "surname": surname}
-        response = requests.get(search_url, params=params)
+        if not data:
+            print("No se ingresaron datos para actualizar. Operación cancelada.")
+            return
+
+        url = f"{ip_address}/laureates/{laureate_id}"
+        datos_item = data.dict()
+        response = requests.put(url, json=datos_item)
+        print(f'URL: {url}')
+        print(f'Data: {datos_item}')
 
         if response.status_code == 200:
-            results = response.json()["results"]
-            if len(results) == 1:
-                laureate_id = results[0]["id"]  # Obtener el ID del único resultado
-            elif len(results) > 1:
-                print("Se encontraron múltiples laureados:")
-                for laureate in results:
-                    print(f"ID: {laureate['id']}, Nombre: {laureate['details']['firstname']}, Apellido: {laureate['details'].get('surname', 'N/A')}")
-                laureate_id = input("Introduce el ID del laureado que deseas actualizar: ").strip()
-            else:
-                print("No se encontraron laureados con ese nombre/apellido.")
-                return
+            print("Actualización exitosa:", response.json())
+        elif response.status_code == 404:
+            print(f"Laureado con ID {laureate_id} no encontrado.")
         else:
-            print(f"Error al buscar laureados: {response.status_code}, {response.json()['detail']}")
-            return
-    else:
-        print("Opción no válida. Intenta de nuevo.")
-        return
-
-    # Solicitar los datos a actualizar
-    print("Introduce los nuevos datos del laureado (deja en blanco para no modificar):")
-    firstname = input("Nuevo Nombre: ").strip() or None
-    surname = input("Nuevo Apellido: ").strip() or None
-    motivation = input("Nueva Motivación: ").strip() or None
-    share = input("Nuevo Share: ").strip() or None
-
-    # Realizar la solicitud PUT al servidor
-    update_url = f"{ip_address}/laureates/{laureate_id}"
-    data = {
-        "firstname": firstname,
-        "surname": surname,
-        "motivation": motivation,
-        "share": share
-    }
-    # Filtrar los valores None para no enviar campos vacíos
-    data = {key: value for key, value in data.items() if value is not None}
-
-    # Imprime los datos para depuración
-    print("URL de actualización:", update_url)
-    print("Datos enviados al servidor:", data)
-
-    # Realizar la solicitud PUT con encabezados correctos
-    response = requests.put(update_url, json=data, headers={"Content-Type": "application/json"})
-
-    if response.status_code == 200:
-        print("Laureado actualizado exitosamente:", response.json())
-    else:
-        print(f"Error al actualizar el laureado: {response.status_code}, {response.json().get('detail', 'Error desconocido')}")
-
+            print(f"Error {response.status_code}: {response.json()}")
+    except Exception as e:
+        print(f"Error al actualizar el laureado: {e}")
 
 def update(a):
     print("1. Editar Laureado")
