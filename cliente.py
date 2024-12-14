@@ -1,7 +1,7 @@
+from pydantic import BaseModel
 from fastapi import FastAPI
 import requests
 import json
-from pydantic import BaseModel
 
 class Laureate(BaseModel):
     id: int
@@ -9,6 +9,10 @@ class Laureate(BaseModel):
     surname: str | None = None
     motivation: str | None = None
     share: str | None = None
+
+class Prize(BaseModel):
+    category: str | None = None
+    year: str | None = None
 
 ip_address = "http://127.0.0.1:8000"
 
@@ -382,6 +386,36 @@ def update_laureate():
     except Exception as e:
         print(f"Error al actualizar el laureado: {e}")
 
+def update_prize():
+    item_id = input("Ingresa el ID del ítem: ")
+    year = input("Ingresa el año del ítem: ")
+    category = input("Ingresa la categoría del ítem: ")
+    year = str(year)
+    category = str(category)
+
+
+    # Crear un objeto Item con los nuevos datos
+    nuevo_item = Prize(year=year, category=category)
+
+
+    # URL de la API con el ID proporcionado
+    url = f"http://127.0.0.1:8000/prizes/{item_id}"
+    datos_item = nuevo_item.dict()
+
+
+    # Hacer una solicitud PUT a la API
+    response = requests.put(url, json=datos_item)
+
+
+    # Comprobar la respuesta
+    if response.status_code == 200:
+        print("Ítem actualizado con éxito:")
+        print(response.json())  # Muestra la respuesta de la API (el ítem actualizado)
+    else:
+        print(f"Error al actualizar el ítem. Código de estado: {response.status_code}")
+        print(response.json())  # Muestra el mensaje de error
+
+
 def update(a):
     print("1. Editar Laureado")
     print("2. Editar Premio")
@@ -392,7 +426,7 @@ def update(a):
     if seleccion == 1:
         update_laureate()
     elif seleccion == 2:
-        read(dir)
+        update_prize()
     else:
         print("Opción no válida. Intenta de nuevo.")
 

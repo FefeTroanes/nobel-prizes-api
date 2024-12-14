@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel
 import requests
 import json
 import os
@@ -17,10 +18,9 @@ class Laureate:
     motivation: str
     share: str
 
-class Prize:
-    year: str
-    category: str
-    laureates: [Laureate]
+class Prize(BaseModel):
+    category: str | None = None
+    year: str | None = None
 
 
 # //////////////   GET   //////////////
@@ -380,7 +380,34 @@ def update_laureate(
     except json.JSONDecodeError:
         raise HTTPException(status_code=500, detail="Error decoding laureates.json")
 
+@app.put("/prizes/{prize_id}", response_model=Prize)
+async def update_item(prize_id: str, prize: Prize):
+    # Abrir el archivo en modo lectura
+    try:
+        with open('prizes.json', 'r') as archivo:
+            datos = json.load(archivo)
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail="El archivo no se encontró.")
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=500, detail="Error al decodificar el archivo JSON.")
 
+    # Verificar si el item_id existe
+    if prize_id not in datos:
+        raise HTTPException(status_code=404, detail="Item no encontrado")
+
+    # Actualizar los datos con la nueva información
+    diccionario = prize.dict()
+    datos[prize_id]["year"] = diccionario["year"]
+    datos[prize_id]["category"] = diccionario["category"]
+
+
+    # Guardar los cambios de nuevo en el archivo
+    with open('prizes.json', 'w') as archivo:
+        json.dump(datos, archivo, indent=4)
+
+
+    # Devolver el objeto actualizado
+    return prize
 
 
 # @app.get("/items/{item_id}")
